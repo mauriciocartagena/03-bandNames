@@ -1,11 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
+import { SocketContext } from "../context/SocketContext";
 
-export const BandList = ({ data, votar, borrar, cambiarNombre }) => {
-  const [bands, setBands] = useState(data);
+export const BandList = () => {
+  const [bands, setBands] = useState([]);
+
+  const { socket } = useContext(SocketContext);
 
   useEffect(() => {
-    setBands(data);
-  }, [data]);
+    socket.on("current-bands", (bands) => {
+      setBands(bands);
+    });
+
+    return () => socket.off("current-bands");
+  }, [socket]);
 
   const cambioNombre = (event, id) => {
     const nuevoNombre = event.target.value;
@@ -21,7 +28,15 @@ export const BandList = ({ data, votar, borrar, cambiarNombre }) => {
   };
 
   const onPerdioFoco = (id, name) => {
-    cambiarNombre(id, name);
+    socket.emit("cambiar-nombre-banda", { id, name });
+  };
+
+  const votar = (id) => {
+    socket.emit("votar-banda", id);
+  };
+
+  const borrar = (id) => {
+    socket.emit("borrar-banda", id);
   };
 
   const crearRows = () => {
@@ -54,7 +69,7 @@ export const BandList = ({ data, votar, borrar, cambiarNombre }) => {
   };
 
   return (
-    <>
+    <React.Fragment>
       <table className="table table-stripped">
         <thead>
           <tr>
@@ -66,6 +81,6 @@ export const BandList = ({ data, votar, borrar, cambiarNombre }) => {
         </thead>
         <tbody>{crearRows()}</tbody>
       </table>
-    </>
+    </React.Fragment>
   );
 };
